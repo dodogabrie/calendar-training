@@ -1,10 +1,16 @@
+# events/views.py
 from rest_framework import viewsets
-from .models import TrainingEvent, TrainingStep
-from .serializers import TrainingEventSerializer, TrainingStepSerializer
+from .models import Activity, TrainingStep
+from .serializers import ActivitySerializer, TrainingStepSerializer, ActivityCreateSerializer
 
-class TrainingEventViewSet(viewsets.ModelViewSet):
-    queryset = TrainingEvent.objects.all()
-    serializer_class = TrainingEventSerializer
+class ActivityViewSet(viewsets.ModelViewSet):
+    queryset = Activity.objects.all()
+    serializer_class = ActivitySerializer
+
+    def get_serializer_class(self):
+        if self.action in ['create', 'update']:
+            return ActivityCreateSerializer
+        return ActivitySerializer
 
 class TrainingStepViewSet(viewsets.ModelViewSet):
     queryset = TrainingStep.objects.all()

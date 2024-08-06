@@ -1,36 +1,49 @@
 from django.db import models
 
-class TrainingEvent(models.Model):
-    DURATION = 'DUR'
-    DISTANCE = 'DIS'
+class Activity(models.Model):
+    MANUAL = 'manual'
+    GARMIN = 'garmin'
 
-    EVENT_TYPE_CHOICES = [
-        (DURATION, 'Duration'),
-        (DISTANCE, 'Distance'),
+    SOURCE_CHOICES = [
+        (MANUAL, 'Manual'),
+        (GARMIN, 'Garmin'),
     ]
 
-    title = models.CharField(verbose_name='Titolo', max_length=200)
-    event_type = models.CharField(verbose_name='Tipo Allenamento', max_length=3, choices=EVENT_TYPE_CHOICES)
+    source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default=MANUAL)
+    activity_id = models.CharField(max_length=100, unique=True, null=True, blank=True)  # For external IDs
+    title = models.CharField(max_length=200)
     start_time = models.DateTimeField()
-    duration = models.DurationField(null=True, blank=True)
-    distance = models.FloatField(null=True, blank=True)  # in kilometers
+    duration = models.FloatField()  # in seconds
+    distance = models.FloatField(null=True, blank=True)  # in meters
+    calories = models.FloatField(null=True, blank=True)  # in calories
+    elevation_gain = models.FloatField(null=True, blank=True)  # in meters
+    time_in_zones = models.JSONField(default=dict, blank=True)  # to store time in heart rate zones
 
     def __str__(self):
-        return str(self.title)
+        return f"{self.title} - {self.start_time}"
 
 class TrainingStep(models.Model):
-    training_event = models.ForeignKey(TrainingEvent, related_name='steps', on_delete=models.CASCADE)
-    step_number = models.PositiveIntegerField()
-    description = models.TextField()
+    activity = models.ForeignKey(Activity, related_name='training_steps', on_delete=models.CASCADE)
+    step_type = models.CharField(max_length=100)
     duration = models.DurationField(null=True, blank=True)
-    distance = models.FloatField(null=True, blank=True)  # in kilometers
-    elevation_gain = models.FloatField(null=True, blank=True)
-    rest_duration = models.DurationField(null=True, blank=True)
+    distance = models.FloatField(null=True, blank=True)  # in meters
 
     def __str__(self):
-        return f"{self.training_event.title} - Step {self.step_number}"
+        return f"{self.step_type} - {self.activity.title}"
 
+class TrainingLoop(models.Model):
+    activity = models.ForeignKey(Activity, related_name='training_loops', on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    repeat_count = models.IntegerField(default=1)  # Number of times this loop repeats
+    steps = models.ManyToManyField(TrainingStep, related_name='loops')
 
+    def __str__(self):
+        return f"{self.name} - {self.activity.title}"
 
+class HeartRateDataPoint(models.Model):
+    activity = models.ForeignKey(Activity, related_name='heart_rate_data', on_delete=models.CASCADE)
+    timestamp = models.DateTimeField()
+    heart_rate = models.IntegerField()
 
-
+    def __str__(self):
+        return f"{self.timestamp} - {self.heart_rate} BPM"
