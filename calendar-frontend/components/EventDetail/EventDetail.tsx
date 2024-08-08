@@ -1,6 +1,6 @@
 // EventDetail.tsx
 import React from 'react';
-import HeartRateZones from './HeartRateZones';
+import {HeartRateZones} from './HeartRateZones';
 import { TrainingEvent } from '../types';
 
 interface EventDetailProps {

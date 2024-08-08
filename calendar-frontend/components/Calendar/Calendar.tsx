@@ -2,6 +2,7 @@
 import React from 'react';
 import CalendarDay from './CalendarDay';
 import { TrainingEvent } from '../types';
+import { TotalHeartRateZonesColumn } from '../EventDetail/HeartRateZones';
 
 interface CalendarProps {
   currentDate: Date;
@@ -14,24 +15,28 @@ const Calendar: React.FC<CalendarProps> = ({ currentDate, trainingEvents, getEve
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
   const weeks = [];
-  let days = [];
+  let days: { date: Date, element: JSX.Element }[] = [];
 
   const startDay = firstDayOfMonth.getDay();
 
   for (let i = 0; i < startDay; i++) {
-    days.push(<td key={`empty-${i}`} className="border p-2"></td>);
+    days.push({ date: new Date(), element: <td key={`empty-${i}`} className="border p-2"></td> });
   }
 
   for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     const events = getEventsForDate(date);
 
-    days.push(
-      <CalendarDay key={day} date={day} events={events} onSelectEvent={onSelectEvent} />
-    );
+    days.push({
+      date,
+      element: <CalendarDay key={day} date={day} events={events} onSelectEvent={onSelectEvent} />
+    });
 
     if ((day + startDay) % 7 === 0 || day === lastDayOfMonth.getDate()) {
-      weeks.push(<tr key={`week-${day}`} className="border">{days}</tr>);
+      weeks.push(<tr key={`week-${day}`} className="border">
+        {days.map(d => d.element)}
+        <TotalHeartRateZonesColumn events={days.flatMap(day => getEventsForDate(day.date))} />
+      </tr>);
       days = [];
     }
   }
